@@ -13,7 +13,6 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Handler;
-import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -23,7 +22,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
-import android.widget.TextView;
+import android.widget.LinearLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +38,7 @@ import uk.co.deanwild.materialshowcaseview.target.ViewTarget;
 /**
  * Helper class to show a sequence of showcase views.
  */
-public class MaterialShowcaseView extends FrameLayout implements View.OnTouchListener, View.OnClickListener {
+public class MaterialShowcaseView extends FrameLayout implements View.OnTouchListener {
 
     private int mOldHeight;
     private int mOldWidth;
@@ -54,8 +53,7 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
     private int mShapePadding = ShowcaseConfig.DEFAULT_SHAPE_PADDING;
 
     private View mContentBox;
-    private TextView mContentTextView;
-    private TextView mDismissButton;
+    private View mTriangle;
     private int mGravity;
     private int mContentBottomMargin;
     private int mContentTopMargin;
@@ -114,12 +112,6 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         mMaskColour = Color.parseColor(ShowcaseConfig.DEFAULT_MASK_COLOUR);
         setVisibility(INVISIBLE);
 
-
-        View contentView = LayoutInflater.from(getContext()).inflate(R.layout.showcase_content, this, true);
-        mContentBox = contentView.findViewById(R.id.content_box);
-        mContentTextView = (TextView) contentView.findViewById(R.id.tv_content);
-        mDismissButton = (TextView) contentView.findViewById(R.id.tv_dismiss);
-        mDismissButton.setOnClickListener(this);
     }
 
 
@@ -229,16 +221,6 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
     }
 
     /**
-     * Dismiss button clicked
-     *
-     * @param v
-     */
-    @Override
-    public void onClick(View v) {
-        hide();
-    }
-
-    /**
      * Tells us about the "Target" which is the view we want to anchor to.
      * We figure out where it is on screen and (optionally) how big it is.
      * We also figure out whether to place our content and dismiss button above or below it.
@@ -247,9 +229,6 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
      */
     public void setTarget(Target target) {
         mTarget = target;
-
-        // update dismiss button state
-        updateDismissButton();
 
         if (mTarget != null) {
 
@@ -296,6 +275,13 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         applyLayoutParams();
     }
 
+    private void setLayout(View view) {
+        View contentView = LayoutInflater.from(getContext()).inflate(R.layout.showcase_content, this, true);
+        mContentBox = contentView.findViewById(R.id.content_box);
+        mTriangle = contentView.findViewById(R.id.triangle);
+        ((FrameLayout) contentView.findViewById(R.id.container)).addView(view);
+    }
+
     private void applyLayoutParams() {
 
         if (mContentBox != null && mContentBox.getLayoutParams() != null) {
@@ -321,8 +307,11 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
             /**
              * Only apply the layout params if we've actually changed them, otherwise we'll get stuck in a layout loop
              */
-            if (layoutParamsChanged)
+            if (layoutParamsChanged) {
                 mContentBox.setLayoutParams(contentLP);
+                int triangleOffset = mTriangle.getWidth() / 2;
+                ((LinearLayout.LayoutParams) mTriangle.getLayoutParams()).leftMargin = mXPosition - triangleOffset;
+            }
         }
     }
 
@@ -337,32 +326,6 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
     void setPosition(int x, int y) {
         mXPosition = x;
         mYPosition = y;
-    }
-
-    private void setContentText(CharSequence contentText) {
-        if (mContentTextView != null) {
-            mContentTextView.setText(contentText);
-        }
-    }
-
-    private void setDismissText(CharSequence dismissText) {
-        if (mDismissButton != null) {
-            mDismissButton.setText(dismissText);
-
-            updateDismissButton();
-        }
-    }
-
-    private void setContentTextColor(int textColour) {
-        if (mContentTextView != null) {
-            mContentTextView.setTextColor(textColour);
-        }
-    }
-
-    private void setDismissTextColor(int textColour) {
-        if (mDismissButton != null) {
-            mDismissButton.setTextColor(textColour);
-        }
     }
 
     private void setShapePadding(int padding) {
@@ -415,22 +378,9 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
     public void setConfig(ShowcaseConfig config) {
         setDelay(config.getDelay());
         setFadeDuration(config.getFadeDuration());
-        setContentTextColor(config.getContentTextColor());
-        setDismissTextColor(config.getDismissTextColor());
         setMaskColour(config.getMaskColor());
         setShape(config.getShape());
         setShapePadding(config.getShapePadding());
-    }
-
-    private void updateDismissButton() {
-        // hide or show button
-        if (mDismissButton != null) {
-            if (TextUtils.isEmpty(mDismissButton.getText())) {
-                mDismissButton.setVisibility(GONE);
-            } else {
-                mDismissButton.setVisibility(VISIBLE);
-            }
-        }
     }
 
     public boolean hasFired() {
@@ -465,10 +415,11 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
 
         private final Activity activity;
 
-        public Builder(Activity activity) {
+        public Builder(Activity activity, View view) {
             this.activity = activity;
 
             showcaseView = new MaterialShowcaseView(activity);
+            showcaseView.setLayout(view);
         }
 
         /**
@@ -479,34 +430,6 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
             return this;
         }
 
-        /**
-         * Set the title text shown on the ShowcaseView.
-         */
-        public Builder setDismissText(int resId) {
-            return setDismissText(activity.getString(resId));
-        }
-
-        public Builder setDismissText(CharSequence dismissText) {
-            showcaseView.setDismissText(dismissText);
-            return this;
-        }
-
-        /**
-         * Set the title text shown on the ShowcaseView.
-         */
-        public Builder setContentText(int resId) {
-            return setContentText(activity.getString(resId));
-        }
-
-        /**
-         * Set the descriptive text shown on the ShowcaseView.
-         */
-        public Builder setContentText(CharSequence text) {
-            showcaseView.setContentText(text);
-            return this;
-        }
-
-
         public Builder setDismissOnTouch(boolean dismissOnTouch) {
             showcaseView.setDismissOnTouch(dismissOnTouch);
             return this;
@@ -514,16 +437,6 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
 
         public Builder setMaskColour(int maskColour) {
             showcaseView.setMaskColour(maskColour);
-            return this;
-        }
-
-        public Builder setContentTextColor(int textColour) {
-            showcaseView.setContentTextColor(textColour);
-            return this;
-        }
-
-        public Builder setDismissTextColor(int textColour) {
-            showcaseView.setDismissTextColor(textColour);
             return this;
         }
 
@@ -675,8 +588,6 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
                 }
             }
         }, mDelayInMillis);
-
-        updateDismissButton();
 
         return true;
     }

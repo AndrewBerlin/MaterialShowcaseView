@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
@@ -46,12 +47,14 @@ public class SimpleSingleExample extends AppCompatActivity implements View.OnCli
     }
 
     private void presentShowcaseView(int withDelay) {
-        new MaterialShowcaseView.Builder(this)
+
+        TextView view = new TextView(this);
+        view.setText("hi");
+
+        new MaterialShowcaseView.Builder(this, view)
                 .setTarget(mButtonShow)
-                .setDismissText("GOT IT")
-                .setContentText("This is some amazing feature you should know about")
                 .setDelay(withDelay) // optional but starting animations immediately in onCreate can make them choppy
-                .singleUse(SHOWCASE_ID) // provide a unique ID used to ensure it is only shown once
+//                .singleUse(SHOWCASE_ID) // provide a unique ID used to ensure it is only shown once
                 .show();
     }
 

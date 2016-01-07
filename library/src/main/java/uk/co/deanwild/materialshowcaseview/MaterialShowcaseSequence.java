@@ -29,12 +29,10 @@ public class MaterialShowcaseSequence implements IDetachedListener {
         this.singleUse(sequenceID);
     }
 
-    public MaterialShowcaseSequence addSequenceItem(View targetView, String content, String dismissText) {
+    public MaterialShowcaseSequence addSequenceItem(View targetView, View view) {
 
-        MaterialShowcaseView sequenceItem = new MaterialShowcaseView.Builder(mActivity)
+        MaterialShowcaseView sequenceItem = new MaterialShowcaseView.Builder(mActivity, view)
                 .setTarget(targetView)
-                .setDismissText(dismissText)
-                .setContentText(content)
                 .build();
 
         if (mConfig != null) {
