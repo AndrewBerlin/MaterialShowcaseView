@@ -383,6 +383,10 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         setShapePadding(config.getShapePadding());
     }
 
+    public void showTriangle() {
+        mTriangle.setVisibility(View.VISIBLE);
+    }
+
     public boolean hasFired() {
         return mPrefsManager.hasFired();
     }
@@ -477,6 +481,11 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
 
         public Builder setShapePadding(int padding) {
             showcaseView.setShapePadding(padding);
+            return this;
+        }
+
+        public Builder showPointer() {
+            showcaseView.showTriangle();
             return this;
         }
 
