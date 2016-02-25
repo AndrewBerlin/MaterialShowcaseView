@@ -34,11 +34,10 @@ public class ToolTipExample extends AppCompatActivity implements View.OnClickLis
         final View tooltipView = this.getLayoutInflater().inflate(R.layout.layout_tooltip, null, false);
         final MaterialShowcaseView.Builder builder = new MaterialShowcaseView.Builder(this, tooltipView).setTarget(target)
                 .setMaskColour(getApplicationContext().getResources().getColor(R.color.transparent_black));
-
-
-        builder.showPointer();
+        
         builder.setFadeDuration(500);
         builder.setDismissOnTouch(true);
+        builder.setContentMarginOffset(10);
 
 
         final MaterialShowcaseView showcaseView = builder.show();
