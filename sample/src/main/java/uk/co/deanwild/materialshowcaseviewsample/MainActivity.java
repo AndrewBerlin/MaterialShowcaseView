@@ -24,7 +24,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         button.setOnClickListener(this);
         button = (Button) findViewById(R.id.btn_reset_all);
         button.setOnClickListener(this);
-
+        button = (Button) findViewById(R.id.btn_tooltip_example);
+        button.setOnClickListener(this);
     }
 
     @Override
@@ -48,6 +49,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btn_reset_all:
                 MaterialShowcaseView.resetAll(this);
                 Toast.makeText(this, "All Showcases reset", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.btn_tooltip_example:
+                intent = new Intent(this, ToolTipExample.class);
                 break;
         }
 
