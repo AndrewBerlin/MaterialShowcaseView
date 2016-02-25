@@ -22,7 +22,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +54,7 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
 
     private View mContentBox;
     private View mTriangle;
+    private View scrollView;
     private int mGravity;
     private int mContentBottomMargin;
     private int mContentTopMargin;
@@ -277,8 +278,9 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
 
     private void setLayout(View view) {
         View contentView = LayoutInflater.from(getContext()).inflate(R.layout.showcase_content, this, true);
-        mContentBox = contentView.findViewById(R.id.content_box);
-        mTriangle = contentView.findViewById(R.id.triangle);
+        this.mContentBox = contentView.findViewById(R.id.content_box);
+        this.mTriangle = contentView.findViewById(R.id.triangle);
+        this.scrollView = contentView.findViewById(R.id.container);
         ((FrameLayout) contentView.findViewById(R.id.container)).addView(view);
     }
 
@@ -310,8 +312,37 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
             if (layoutParamsChanged) {
                 mContentBox.setLayoutParams(contentLP);
                 int triangleOffset = mTriangle.getWidth() / 2;
-                ((LinearLayout.LayoutParams) mTriangle.getLayoutParams()).leftMargin = mXPosition - triangleOffset;
+                ((RelativeLayout.LayoutParams) mTriangle.getLayoutParams()).leftMargin = mXPosition - triangleOffset;
+                changeContentOrientation();
             }
+        }
+    }
+
+    public void changeContentOrientation(){
+
+        if(mTriangle.getVisibility() == View.GONE)
+            return;
+
+        //target changed to lower half of screen
+        if(this.mContentTopMargin == 0){
+
+            ((RelativeLayout.LayoutParams)this.mTriangle.getLayoutParams()).addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+            ((RelativeLayout.LayoutParams)this.scrollView.getLayoutParams()).addRule(RelativeLayout.BELOW, 0);
+
+            ((RelativeLayout.LayoutParams)this.scrollView.getLayoutParams()).addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            ((RelativeLayout.LayoutParams)this.mTriangle.getLayoutParams()).addRule(RelativeLayout.BELOW, R.id.container);
+
+            this.mTriangle.setBackgroundResource(R.drawable.triangle_down);
+        }
+        else{
+            //target changed to upper half of screen
+            ((RelativeLayout.LayoutParams)this.scrollView.getLayoutParams()).addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+            ((RelativeLayout.LayoutParams)this.mTriangle.getLayoutParams()).addRule(RelativeLayout.BELOW,  0);
+
+            ((RelativeLayout.LayoutParams)this.mTriangle.getLayoutParams()).addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            ((RelativeLayout.LayoutParams)this.scrollView.getLayoutParams()).addRule(RelativeLayout.BELOW, R.id.triangle);
+
+            this.mTriangle.setBackgroundResource(R.drawable.triangle);
         }
     }
 
