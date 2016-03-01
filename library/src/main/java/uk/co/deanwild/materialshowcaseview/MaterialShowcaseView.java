@@ -22,7 +22,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +54,7 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
 
     private View mContentBox;
     private View mTriangle;
+    private View scrollView;
     private int mGravity;
     private int mContentBottomMargin;
     private int mContentTopMargin;
@@ -66,7 +67,9 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
     private Handler mHandler;
     private long mDelayInMillis = ShowcaseConfig.DEFAULT_DELAY;
     private int mBottomMargin = 0;
+    private int contentMarginOffset = 0;
     private boolean mSingleUse = false; // should display only once
+    private boolean isShapeVisible = true; //used to change visibility of the shape
     private PrefsManager mPrefsManager; // used to store state doe single use mode
     List<IShowcaseListener> mListeners; // external listeners who want to observe when we show and dismiss
     private UpdateOnGlobalLayout mLayoutListener;
@@ -163,7 +166,8 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         }
 
         // draw (erase) shape
-        mShape.draw(mCanvas, mEraser, mXPosition, mYPosition, mShapePadding);
+        if(this.isShapeVisible)
+            mShape.draw(mCanvas, mEraser, mXPosition, mYPosition, mShapePadding);
 
         // Draw the bitmap on our views  canvas.
         canvas.drawBitmap(mBitmap, 0, 0, null);
@@ -262,11 +266,11 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
             if (yPos > midPoint) {
                 // target is in lower half of screen, we'll sit above it
                 mContentTopMargin = 0;
-                mContentBottomMargin = (height - yPos) + radius + mShapePadding;
+                mContentBottomMargin = (height - yPos) + radius + mShapePadding + contentMarginOffset;
                 mGravity = Gravity.BOTTOM;
             } else {
                 // target is in upper half of screen, we'll sit below it
-                mContentTopMargin = yPos + radius + mShapePadding;
+                mContentTopMargin = yPos + radius + mShapePadding + contentMarginOffset;
                 mContentBottomMargin = 0;
                 mGravity = Gravity.TOP;
             }
@@ -279,6 +283,7 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         View contentView = LayoutInflater.from(getContext()).inflate(R.layout.showcase_content, this, true);
         mContentBox = contentView.findViewById(R.id.content_box);
         mTriangle = contentView.findViewById(R.id.triangle);
+        scrollView = contentView.findViewById(R.id.container);
         ((FrameLayout) contentView.findViewById(R.id.container)).addView(view);
     }
 
@@ -310,8 +315,37 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
             if (layoutParamsChanged) {
                 mContentBox.setLayoutParams(contentLP);
                 int triangleOffset = mTriangle.getWidth() / 2;
-                ((LinearLayout.LayoutParams) mTriangle.getLayoutParams()).leftMargin = mXPosition - triangleOffset;
+                ((RelativeLayout.LayoutParams) mTriangle.getLayoutParams()).leftMargin = mXPosition - triangleOffset;
+                changeContentOrientation();
             }
+        }
+    }
+
+    public void changeContentOrientation(){
+
+        if(mTriangle.getVisibility() == View.GONE)
+            return;
+
+        //target changed to lower half of screen
+        if(this.mContentTopMargin == 0){
+
+            ((RelativeLayout.LayoutParams)this.mTriangle.getLayoutParams()).addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+            ((RelativeLayout.LayoutParams)this.scrollView.getLayoutParams()).addRule(RelativeLayout.BELOW, 0);
+
+            ((RelativeLayout.LayoutParams)this.scrollView.getLayoutParams()).addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            ((RelativeLayout.LayoutParams)this.mTriangle.getLayoutParams()).addRule(RelativeLayout.BELOW, R.id.container);
+
+            this.mTriangle.setBackgroundResource(R.drawable.triangle_down);
+        }
+        else{
+            //target changed to upper half of screen
+            ((RelativeLayout.LayoutParams)this.scrollView.getLayoutParams()).addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+            ((RelativeLayout.LayoutParams)this.mTriangle.getLayoutParams()).addRule(RelativeLayout.BELOW,  0);
+
+            ((RelativeLayout.LayoutParams)this.mTriangle.getLayoutParams()).addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            ((RelativeLayout.LayoutParams)this.scrollView.getLayoutParams()).addRule(RelativeLayout.BELOW, R.id.triangle);
+
+            this.mTriangle.setBackgroundResource(R.drawable.triangle);
         }
     }
 
@@ -326,6 +360,10 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
     void setPosition(int x, int y) {
         mXPosition = x;
         mYPosition = y;
+    }
+
+    private void setShapeVisible(Boolean shapeVisible){
+        this.isShapeVisible = shapeVisible;
     }
 
     private void setShapePadding(int padding) {
@@ -362,12 +400,23 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         }
     }
 
+    public void setPointerVisible(Boolean showPointer) {
+        if(showPointer)
+            mTriangle.setVisibility(View.VISIBLE);
+        else
+            mTriangle.setVisibility(View.GONE);
+    }
+
     void setDetachedListener(IDetachedListener detachedListener) {
         mDetachedListener = detachedListener;
     }
 
     public void setShape(Shape mShape) {
         this.mShape = mShape;
+    }
+
+    public void setContentMarginOffset(int offset) {
+        this.contentMarginOffset = offset;
     }
 
     /**
@@ -381,10 +430,6 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
         setMaskColour(config.getMaskColor());
         setShape(config.getShape());
         setShapePadding(config.getShapePadding());
-    }
-
-    public void showTriangle() {
-        mTriangle.setVisibility(View.VISIBLE);
     }
 
     public boolean hasFired() {
@@ -469,6 +514,16 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
             return this;
         }
 
+        public Builder setShapeVisible(boolean shapeVisible) {
+            this.showcaseView.setShapeVisible(shapeVisible);
+            return this;
+        }
+
+        public Builder setPointerVisible(boolean shapeVisible) {
+            this.showcaseView.setPointerVisible(shapeVisible);
+            return this;
+        }
+
         public Builder withCircleShape() {
             shapeType = CIRCLE_SHAPE;
             return this;
@@ -484,8 +539,8 @@ public class MaterialShowcaseView extends FrameLayout implements View.OnTouchLis
             return this;
         }
 
-        public Builder showPointer() {
-            showcaseView.showTriangle();
+        public Builder setContentMarginOffset(int offset){
+            this.showcaseView.setContentMarginOffset(offset);
             return this;
         }
 

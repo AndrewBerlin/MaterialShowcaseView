@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/content_box"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <View
-        android:id="@+id/triangle"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginTop="-8dp"
-        android:background="@drawable/triangle"
-        android:visibility="gone"/>
-
     <ScrollView
         android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="32dp"
-        android:layout_marginRight="32dp" />
+        android:layout_marginLeft="25dp"
+        android:layout_marginRight="25dp"
+        android:clipToPadding="false"
+        android:padding="10dp"/>
 
-</LinearLayout>
+    <View
+        android:id="@+id/triangle"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginBottom="-11dp"
+        android:layout_marginTop="-11dp" />
+
+</RelativeLayout>

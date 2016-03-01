@@ -25,6 +25,10 @@
             android:label="@string/title_activity_custom_example" >
         </activity>
         <activity
+            android:name=".ToolTipExample"
+            android:label="@string/title_activity_custom_example" >
+        </activity>
+        <activity
             android:name=".SequenceExample"
             android:label="@string/title_activity_sequence_example" >
         </activity>
